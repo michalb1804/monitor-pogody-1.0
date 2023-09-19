@@ -7,12 +7,6 @@ public class Main extends Thread {
         Thread serverThread = new Thread(MonitorServer::start);
         serverThread.start();
 
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
         MonitorClient.start();
     }
 }
