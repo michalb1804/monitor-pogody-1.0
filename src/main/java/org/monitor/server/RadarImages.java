@@ -3,7 +3,6 @@ package org.monitor.server;
 import org.monitor.exceptions.ImageDownloadException;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;

@@ -5,7 +5,8 @@ import org.monitor.server.RequestChannel;
 import org.monitor.server.RequestStatus;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,6 +17,8 @@ import java.util.Hashtable;
 public class MonitorClient {
     private static ResponseStatus responseStatus = ResponseStatus.NO_RESPONSE;
     private static Object[] receivedData = null;
+    private static JFrame frame;
+    private static JTextField loadingMessage;
 
     public static void sendDataRequest(RequestChannel requestedData) {
         synchronized (MonitorServer.class) {
@@ -39,7 +42,7 @@ public class MonitorClient {
     }
 
     public static void startGUI() {
-        JFrame frame = new JFrame("Monitor Pogody v1.0");
+        frame = new JFrame("Monitor Pogody v1.0");
         frame.setLayout(new GridLayout(3, 1));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1080, 720);
@@ -53,7 +56,7 @@ public class MonitorClient {
         RadarDataDownloadButton.setFont(new Font("Arial", Font.BOLD, 16));
         frame.add(RadarDataDownloadButton);
 
-        JTextField loadingMessage = new JTextField();
+        loadingMessage = new JTextField();
         loadingMessage.setText("");
         loadingMessage.setFont(new Font("Arial", Font.BOLD, 36));
         loadingMessage.setEditable(false);
@@ -63,167 +66,77 @@ public class MonitorClient {
         SATDataDownloadButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                loadingMessage.setText("SAT24 images downloading... Please wait");
-                frame.revalidate();
-                frame.repaint();
-
-                new Thread(() -> {
-                    sendDataRequest(RequestChannel.SAT_24);
-
-                    while (responseStatus != ResponseStatus.DATA_RECEIVED) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException ex) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }
-
-                    JFrame satFrame = new JFrame("SAT24 viewer");
-                    satFrame.setLayout(new BorderLayout());
-                    satFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                    satFrame.setSize(1080, 720);
-
-                    JLabel image = new JLabel(new ImageIcon(((BufferedImage) receivedData[0]).getScaledInstance(700,550,0)));
-                    satFrame.add(image, BorderLayout.CENTER);
-
-                    JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 5, 0);
-                    slider.setMajorTickSpacing(5);
-                    slider.setMinorTickSpacing(1);
-                    slider.setPaintTicks(true);
-                    slider.setPreferredSize(new Dimension(500,75));
-
-                    Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-                    labelTable.put(0, new JLabel(MonitorServer.lastTime.minusMinutes(50).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(1, new JLabel(MonitorServer.lastTime.minusMinutes(40).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(2, new JLabel(MonitorServer.lastTime.minusMinutes(30).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(3, new JLabel(MonitorServer.lastTime.minusMinutes(20).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(4, new JLabel(MonitorServer.lastTime.minusMinutes(10).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(5, new JLabel(MonitorServer.lastTime.format(DateTimeFormatter.ofPattern("HH:mm"))));
-
-                    slider.setLabelTable(labelTable);
-                    slider.setPaintLabels(true);
-
-                    slider.addChangeListener(new ChangeListener() {
-                        @Override
-                        public void stateChanged(ChangeEvent e) {
-                            int sliderValue = slider.getValue();
-
-                            switch(sliderValue) {
-                                case 0:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[0]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 1:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[1]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 2:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[2]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 3:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[3]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 4:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[4]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 5:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[5]).getScaledInstance(700,550,0)));
-                                    break;
-                            }
-                        }
-                    });
-
-                    satFrame.add(slider, BorderLayout.PAGE_END);
-                    satFrame.setVisible(true);
-
-                    SwingUtilities.invokeLater(() -> {
-                        loadingMessage.setText("");
-                        frame.revalidate();
-                        frame.repaint();
-                    });
-                }).start();
+                showData("SAT24", RequestChannel.SAT_24, 50, 10);
             }
         });
 
         RadarDataDownloadButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                loadingMessage.setText("Radar images downloading... Please wait");
-                frame.revalidate();
-                frame.repaint();
-
-                new Thread(() -> {
-                    sendDataRequest(RequestChannel.RADAR);
-
-                    while (responseStatus != ResponseStatus.DATA_RECEIVED) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException ex) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }
-
-                    JFrame satFrame = new JFrame("Radar viewer");
-                    satFrame.setLayout(new BorderLayout());
-                    satFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                    satFrame.setSize(1080, 720);
-
-                    JLabel image = new JLabel(new ImageIcon(((BufferedImage) receivedData[0]).getScaledInstance(700,550,0)));
-                    satFrame.add(image, BorderLayout.CENTER);
-
-                    JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 5, 0);
-                    slider.setMajorTickSpacing(5);
-                    slider.setMinorTickSpacing(1);
-                    slider.setPaintTicks(true);
-                    slider.setPreferredSize(new Dimension(500,75));
-
-                    Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-                    labelTable.put(0, new JLabel(MonitorServer.lastTime.minusMinutes(25).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(1, new JLabel(MonitorServer.lastTime.minusMinutes(20).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(2, new JLabel(MonitorServer.lastTime.minusMinutes(15).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(3, new JLabel(MonitorServer.lastTime.minusMinutes(10).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(4, new JLabel(MonitorServer.lastTime.minusMinutes(5).format(DateTimeFormatter.ofPattern("HH:mm"))));
-                    labelTable.put(5, new JLabel(MonitorServer.lastTime.format(DateTimeFormatter.ofPattern("HH:mm"))));
-
-                    slider.setLabelTable(labelTable);
-                    slider.setPaintLabels(true);
-
-                    slider.addChangeListener(new ChangeListener() {
-                        @Override
-                        public void stateChanged(ChangeEvent e) {
-                            int sliderValue = slider.getValue();
-
-                            switch(sliderValue) {
-                                case 0:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[0]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 1:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[1]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 2:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[2]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 3:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[3]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 4:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[4]).getScaledInstance(700,550,0)));
-                                    break;
-                                case 5:
-                                    image.setIcon(new ImageIcon(((BufferedImage) receivedData[5]).getScaledInstance(700,550,0)));
-                                    break;
-                            }
-                        }
-                    });
-
-                    satFrame.add(slider, BorderLayout.PAGE_END);
-                    satFrame.setVisible(true);
-
-                    SwingUtilities.invokeLater(() -> {
-                        loadingMessage.setText("");
-                        frame.revalidate();
-                        frame.repaint();
-                    });
-                }).start();
+                showData("Radar", RequestChannel.RADAR, 25, 5);
             }
+        });
+    }
+
+    private static void showData(String title, RequestChannel requestChannel, int minutesToSubtract, int resolution) {
+        loadingMessage.setText(title + " images downloading... Please wait");
+        frame.revalidate();
+        frame.repaint();
+
+        new Thread(() -> {
+            sendDataRequest(requestChannel);
+
+            while (responseStatus != ResponseStatus.DATA_RECEIVED) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            showImageViewer(title, minutesToSubtract, resolution);
+        }).start();
+    }
+
+    private static void showImageViewer(String title, int minutesToSubtract, int resolution) {
+        JFrame imageFrame = new JFrame(title + " viewer");
+        imageFrame.setLayout(new BorderLayout());
+        imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        imageFrame.setSize(1080, 720);
+
+        JLabel image = new JLabel(new ImageIcon(((BufferedImage) receivedData[0]).getScaledInstance(700, 550, 0)));
+        imageFrame.add(image, BorderLayout.CENTER);
+
+        JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 5, 0);
+        slider.setMajorTickSpacing(5);
+        slider.setMinorTickSpacing(1);
+        slider.setPaintTicks(true);
+        slider.setPreferredSize(new Dimension(500, 75));
+
+        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+        for (int i = 0; i <= 5; i++) {
+            int minutes = minutesToSubtract - i * resolution;
+            labelTable.put(i, new JLabel(MonitorServer.lastTime.minusMinutes(minutes).format(DateTimeFormatter.ofPattern("HH:mm"))));
+        }
+
+        slider.setLabelTable(labelTable);
+        slider.setPaintLabels(true);
+
+        slider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int sliderValue = slider.getValue();
+                image.setIcon(new ImageIcon(((BufferedImage) receivedData[sliderValue]).getScaledInstance(700, 550, 0)));
+            }
+        });
+
+        imageFrame.add(slider, BorderLayout.PAGE_END);
+        imageFrame.setVisible(true);
+
+        SwingUtilities.invokeLater(() -> {
+            loadingMessage.setText("");
+            frame.revalidate();
+            frame.repaint();
         });
     }
 
@@ -231,4 +144,11 @@ public class MonitorClient {
         receivedData = dataToReceive;
         responseStatus = ResponseStatus.DATA_RECEIVED;
     }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            start();
+        });
+    }
 }
+
