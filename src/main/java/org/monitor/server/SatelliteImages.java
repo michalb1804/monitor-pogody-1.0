@@ -3,6 +3,7 @@ package org.monitor.server;
 import org.jsoup.nodes.Document;
 import org.monitor.exceptions.ImageDownloadException;
 
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -13,12 +14,12 @@ public class SatelliteImages implements DataDownload {
     private LocalDateTime newUpdateTime;
     private final String URL_PREFIX;
 
-    private RenderedImage[] images;
+    private BufferedImage[] images;
 
     public SatelliteImages() {
         lastUpdate = null;
         URL_PREFIX = "https://pl.sat24.com/image?type=visual5HDComplete&region=pl&timestamp=";
-        images = new RenderedImage[6];
+        images = new BufferedImage[6];
     }
     @Override
     public boolean checkIfAvailable() {
@@ -40,14 +41,25 @@ public class SatelliteImages implements DataDownload {
                 .split(":");
 
         LocalDateTime dateNewest = LocalDateTime.now(ZoneOffset.UTC);
+        dateNewest = dateNewest.withSecond(59);
+        dateNewest = dateNewest.withNano(999999999);
         dateNewest = dateNewest.withHour(Integer.parseInt(lastHour[0]));
         newUpdateTime = dateNewest.withMinute(Integer.parseInt(lastHour[1]));
 
+        System.out.println(lastUpdate);
+        System.out.println(newUpdateTime);
+
         if (lastUpdate == null && checkIfAvailable()) {
+            lastUpdate = newUpdateTime;
             return true;
         }
 
-        return lastUpdate.isBefore(newUpdateTime);
+        if(lastUpdate.isBefore(newUpdateTime)) {
+            lastUpdate = newUpdateTime;
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -72,4 +84,6 @@ public class SatelliteImages implements DataDownload {
     public RenderedImage[] getData() {
         return images;
     }
+
+    public LocalDateTime getLastUpdate() { return lastUpdate; }
 }
