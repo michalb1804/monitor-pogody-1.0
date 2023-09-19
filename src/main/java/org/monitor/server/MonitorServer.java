@@ -97,6 +97,7 @@ public class MonitorServer {
 
         SatelliteImages satellite = new SatelliteImages();
         RadarImages radar = new RadarImages();
+        IMGWStationData stationData = new IMGWStationData();
         System.out.println("\n-------------------\nSAT24 server available: " + satellite.checkIfAvailable());
         System.out.println("IMGW database available: " + radar.checkIfAvailable() + "\n");
 
@@ -137,6 +138,17 @@ public class MonitorServer {
                             requestStatus = RequestStatus.READY;
 
                             sendToClient(radar.getData());
+                            break;
+                        case IMGW_STATION:
+                            requestStatus = RequestStatus.PROCESSING;
+
+                            if(stationData.checkIfUpdate()) {
+                                stationData.download();
+                            }
+
+                            requestStatus = RequestStatus.READY;
+
+                            sendToClient(stationData.getData());
                             break;
                         default:
                             requestStatus = RequestStatus.ERROR;
