@@ -7,6 +7,7 @@ import org.monitor.exceptions.ImageDownloadException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class HTTPOperations {
         }
     }
 
-    public static RenderedImage downloadImage(String site) throws ImageDownloadException {
+    public static BufferedImage downloadImage(String site) throws ImageDownloadException {
         try {
             return ImageIO.read(new URL(site));
         } catch (IOException ioException) {
